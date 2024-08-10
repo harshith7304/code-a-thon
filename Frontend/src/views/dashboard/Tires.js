@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { Grid, TextField, Box, Typography } from '@mui/material';
 
-// Define prompts and corresponding text field IDs
-const prompts = [
+const tirePrompts = [
   "Please report the tire pressure for the left front tire.",
   "Please report the tire pressure for the right front tire.",
   "What is the condition of the left front tire?",
@@ -12,7 +12,7 @@ const prompts = [
   "What is the condition of the right rear tire?"
 ];
 
-const responseBoxIds = [
+const tireResponseBoxIds = [
   'tirePressureLeftFront',
   'tirePressureRightFront',
   'tireConditionLeftFront',
@@ -23,118 +23,196 @@ const responseBoxIds = [
   'tireConditionRightRear'
 ];
 
-const InspectionApp = () => {
-    const [currentPromptIndex, setCurrentPromptIndex] = useState(0);
-    const [isListening, setIsListening] = useState(false);
+const Tires = ({ formData, handleChange }) => {
+  const [currentPromptIndex, setCurrentPromptIndex] = useState(0);
+  const [isListening, setIsListening] = useState(false);
 
-    const synth = window.speechSynthesis;
-    const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+  const synth = window.speechSynthesis;
+  const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
 
-    recognition.continuous = true;
-    recognition.interimResults = false;
-    recognition.lang = 'en-US';
+  recognition.continuous = true;
+  recognition.interimResults = false;
+  recognition.lang = 'en-US';
 
-    useEffect(() => {
-        if (isListening) {
-            recognition.start();
+  useEffect(() => {
+    if (isListening) {
+      recognition.start();
 
-            recognition.onresult = (event) => {
-                const transcript = event.results[event.results.length - 1][0].transcript.trim().toLowerCase();
-                console.log('Heard:', transcript);
+      recognition.onresult = (event) => {
+        const transcript = event.results[event.results.length - 1][0].transcript.trim().toLowerCase();
+        console.log('Heard:', transcript);
 
-                if (transcript === 'next') {
-                    handleNextPrompt();
-                } else {
-                    updateCurrentField(transcript);
-                }
-            };
-
-            recognition.onerror = (event) => {
-                console.error('Recognition error:', event.error);
-                recognition.stop();
-                recognition.start();
-            };
-        }
-
-        return () => recognition.stop();
-    }, [isListening, currentPromptIndex]);
-
-    const speakText = (text) => {
-        if (synth.speaking) {
-            synth.cancel();
-        }
-
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.onend = () => {
-            setIsListening(true);
-        };
-        synth.speak(utterance);
-    };
-
-    const startListening = () => {
-        setCurrentPromptIndex(0);
-        speakText(prompts[0]);
-    };
-
-    const handleNextPrompt = () => {
-        const nextIndex = currentPromptIndex + 1;
-
-        if (nextIndex < prompts.length) {
-            setCurrentPromptIndex(nextIndex);
-            speakText(prompts[nextIndex]);
+        if (transcript === 'next') {
+          handleNextPrompt();
         } else {
-            setIsListening(false);
-            console.log("Inspection complete.");
+          updateCurrentField(transcript);
         }
+      };
+
+      recognition.onerror = (event) => {
+        console.error('Recognition error:', event.error);
+        recognition.stop();
+        recognition.start();
+      };
+    }
+
+    return () => recognition.stop();
+  }, [isListening, currentPromptIndex]);
+
+  const speakText = (text) => {
+    if (synth.speaking) {
+      synth.cancel();
+    }
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.onend = () => {
+      setIsListening(true);
     };
+    synth.speak(utterance);
+  };
 
-    const updateCurrentField = (transcript) => {
-        const currentFieldId = responseBoxIds[currentPromptIndex];
-        const textBox = document.getElementById(currentFieldId);
-        if (textBox) {
-            textBox.value = transcript;
-        }
-    };
+  const startListening = () => {
+    setCurrentPromptIndex(0);
+    speakText(tirePrompts[0]);
+  };
 
-    return (
-        <div style={{ padding: '20px', maxWidth: '500px', margin: '0 auto', fontFamily: 'Arial, sans-serif' }}>
-            <h1 style={{ color: '#007bff', textAlign: 'center' }}>Tires Inspection</h1>
-            <button 
-                onClick={startListening}
-                style={{
-                    display: 'block',
-                    margin: '0 auto 20px',
-                    padding: '10px 20px',
-                    backgroundColor: '#007bff',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '5px',
-                    cursor: 'pointer'
-                }}
-            >
-                Start Inspection
-            </button>
-            <div id="status" style={{ marginBottom: '20px', textAlign: 'center' }}>Status: {isListening ? 'Listening...' : 'Not Listening'}</div>
+  const handleNextPrompt = () => {
+    const nextIndex = currentPromptIndex + 1;
 
-            {responseBoxIds.map((id, index) => (
-                <div className="input-group" key={id} style={{ marginBottom: '15px' }}>
-                    <label htmlFor={id} style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
-                        {prompts[index]}
-                    </label>
-                    <input 
-                        type="text" 
-                        id={id} 
-                        style={{
-                            width: '100%',
-                            padding: '10px',
-                            border: '2px solid #007bff',
-                            borderRadius: '5px'
-                        }} 
-                    />
-                </div>
-            ))}
-        </div>
-    );
+    if (nextIndex < tirePrompts.length) {
+      setCurrentPromptIndex(nextIndex);
+      speakText(tirePrompts[nextIndex]);
+    } else {
+      setIsListening(false);
+      console.log("Tires inspection complete.");
+    }
+  };
+
+  const updateCurrentField = (transcript) => {
+    const currentFieldId = tireResponseBoxIds[currentPromptIndex];
+    handleChange({ target: { name: currentFieldId, value: transcript } });
+  };
+
+  return (
+    <Box style={{ padding: '20px', maxWidth: '700px', margin: '0 auto', fontFamily: 'Arial, sans-serif' }}>
+      <Typography variant="h4" color="primary" align="center">Tires Inspection</Typography>
+      <button 
+        onClick={startListening}
+        style={{
+          display: 'block',
+          margin: '20px auto',
+          padding: '10px 20px',
+          backgroundColor: '#007bff',
+          color: 'white',
+          border: 'none',
+          borderRadius: '5px',
+          cursor: 'pointer'
+        }}
+      >
+        Start Tires Inspection
+      </button>
+      <Typography id="status" align="center" color="textSecondary">Status: {isListening ? 'Listening...' : 'Not Listening'}</Typography>
+
+      <Grid container spacing={2}>
+        <Grid item xs={6}>
+          <TextField
+            label="Tire Pressure Left Front"
+            id="tirePressureLeftFront"
+            name="tirePressureLeftFront"
+            value={formData.tirePressureLeftFront}
+            onChange={handleChange}
+            fullWidth
+            margin="normal"
+            helperText="Example: 32 psi"
+          />
+        </Grid>
+        <Grid item xs={6}>
+          <TextField
+            label="Tire Pressure Right Front"
+            id="tirePressureRightFront"
+            name="tirePressureRightFront"
+            value={formData.tirePressureRightFront}
+            onChange={handleChange}
+            fullWidth
+            margin="normal"
+            helperText="Example: 32 psi"
+          />
+        </Grid>
+        <Grid item xs={6}>
+          <TextField
+            label="Tire Condition Left Front"
+            id="tireConditionLeftFront"
+            name="tireConditionLeftFront"
+            value={formData.tireConditionLeftFront}
+            onChange={handleChange}
+            fullWidth
+            margin="normal"
+            placeholder="Good, Fair, Poor"
+          />
+        </Grid>
+        <Grid item xs={6}>
+          <TextField
+            label="Tire Condition Right Front"
+            id="tireConditionRightFront"
+            name="tireConditionRightFront"
+            value={formData.tireConditionRightFront}
+            onChange={handleChange}
+            fullWidth
+            margin="normal"
+            placeholder="Good, Fair, Poor"
+          />
+        </Grid>
+        <Grid item xs={6}>
+          <TextField
+            label="Tire Pressure Left Rear"
+            id="tirePressureLeftRear"
+            name="tirePressureLeftRear"
+            value={formData.tirePressureLeftRear}
+            onChange={handleChange}
+            fullWidth
+            margin="normal"
+            helperText="Example: 32 psi"
+          />
+        </Grid>
+        <Grid item xs={6}>
+          <TextField
+            label="Tire Pressure Right Rear"
+            id="tirePressureRightRear"
+            name="tirePressureRightRear"
+            value={formData.tirePressureRightRear}
+            onChange={handleChange}
+            fullWidth
+            margin="normal"
+            helperText="Example: 32 psi"
+          />
+        </Grid>
+        <Grid item xs={6}>
+          <TextField
+            label="Tire Condition Left Rear"
+            id="tireConditionLeftRear"
+            name="tireConditionLeftRear"
+            value={formData.tireConditionLeftRear}
+            onChange={handleChange}
+            fullWidth
+            margin="normal"
+            placeholder="Good, Fair, Poor"
+          />
+        </Grid>
+        <Grid item xs={6}>
+          <TextField
+            label="Tire Condition Right Rear"
+            id="tireConditionRightRear"
+            name="tireConditionRightRear"
+            value={formData.tireConditionRightRear}
+            onChange={handleChange}
+            fullWidth
+            margin="normal"
+            placeholder="Good, Fair, Poor"
+          />
+        </Grid>
+      </Grid>
+    </Box>
+  );
 };
 
-export default InspectionApp;
+export default Tires;

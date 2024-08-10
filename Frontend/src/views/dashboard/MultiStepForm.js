@@ -32,6 +32,16 @@ const MultiStepForm = () => {
   const [formData, setFormData] = useState({
     truckSerialNumber: '',
     truckModel: '',
+    inspectionId: '',
+    inspectorName: '',
+    inspectionEmployeeId: '',
+    dateTimeOfInspection: '',
+    locationOfInspection: '',
+    geoCoordinates: '',
+    serviceMeterHours: '',
+    inspectorSignature: '',
+    customerName: '',
+    catCustomerId: '',
     tirePressureLeftFront: '',
     tirePressureRightFront: '',
     tireConditionLeftFront: '',
@@ -46,18 +56,19 @@ const MultiStepForm = () => {
     batteryWaterLevel: '',
     batteryDamage: '',
     batteryLeakRust: '',
-    engineDamage: '',
-    engineOilCondition: '',
-    engineOilColor: '',
-    brakeFluidCondition: '',
-    brakeFluidColor: '',
-    engineOilLeak: '',
     exteriorDamage: '',
     oilLeakSuspension: '',
     brakeFluidLevel: '',
     brakeConditionFront: '',
     brakeConditionRear: '',
     emergencyBrake: '',
+    engineDamage: '',
+    engineOilCondition: '',
+    engineOilColor: '',
+    brakeFluidCondition: '',
+    brakeFluidColor: '',
+    engineOilLeak: '',
+    
   });
 
   const { startListening, stopListening } = useSpeechRecognition((transcript) => {
@@ -114,6 +125,7 @@ const MultiStepForm = () => {
 
   const handleSubmit = async () => {
     try {
+      console.log(formData);
       await axios.post('http://localhost:5000/api/save-inspection', formData);
       alert('Inspection saved successfully');
     } catch (error) {
