@@ -85,9 +85,13 @@ const MultiStepForm = () => {
 
   useEffect(() => {
     if (currentStep === 1) { // Start listening when on 'Tires' step
-      startListening();
+      if (typeof startListening === 'function') {
+        startListening();
+      }
     } else {
-      stopListening();
+      if (typeof stopListening === 'function') {
+        stopListening();
+      }
     }
   }, [currentStep, startListening, stopListening]);
 

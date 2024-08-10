@@ -1,135 +1,148 @@
-import React from 'react';
-import { Grid, TextField } from '@mui/material';
+import React, { useState, useEffect } from 'react';
 
-const VehicleInfo = ({ formData, handleChange }) => (
-  <Grid container spacing={2}>
-    <Grid item xs={6}>
-      <TextField
-        label="Truck Serial Number"
-        name="truckSerialNumber"
-        value={formData.truckSerialNumber}
-        onChange={handleChange}
-        fullWidth
-        margin="normal"
-        helperText="Example: 7301234, 730EJ73245, 73592849, 735EJBC9723"
-      />
-    </Grid>
-    <Grid item xs={6}>
-      <TextField
-        label="Truck Model"
-        name="truckModel"
-        value={formData.truckModel}
-        onChange={handleChange}
-        fullWidth
-        margin="normal"
-        helperText="Example: 730, 730 EJ, 735, 745"
-      />
-    </Grid>
-    <Grid item xs={6}>
-      <TextField
-        label="Inspection ID"
-        name="inspectionId"
-        value={formData.inspectionId}
-        onChange={handleChange}
-        fullWidth
-        margin="normal"
-        helperText="Auto-incremented unique number"
-      />
-    </Grid>
-    <Grid item xs={6}>
-      <TextField
-        label="Inspector Name"
-        name="inspectorName"
-        value={formData.inspectorName}
-        onChange={handleChange}
-        fullWidth
-        margin="normal"
-      />
-    </Grid>
-    <Grid item xs={6}>
-      <TextField
-        label="Inspection Employee ID"
-        name="inspectionEmployeeId"
-        value={formData.inspectionEmployeeId}
-        onChange={handleChange}
-        fullWidth
-        margin="normal"
-      />
-    </Grid>
-    <Grid item xs={6}>
-      <TextField
-        label="Date & Time of Inspection"
-        name="dateTimeOfInspection"
-        value={formData.dateTimeOfInspection}
-        onChange={handleChange}
-        fullWidth
-        margin="normal"
-        type="datetime-local"
-      />
-    </Grid>
-    <Grid item xs={6}>
-      <TextField
-        label="Location of Inspection"
-        name="locationOfInspection"
-        value={formData.locationOfInspection}
-        onChange={handleChange}
-        fullWidth
-        margin="normal"
-      />
-    </Grid>
-    <Grid item xs={6}>
-      <TextField
-        label="Geo Coordinates of Inspection"
-        name="geoCoordinates"
-        value={formData.geoCoordinates}
-        onChange={handleChange}
-        fullWidth
-        margin="normal"
-        helperText="Optional, in case of remote location"
-      />
-    </Grid>
-    <Grid item xs={6}>
-      <TextField
-        label="Service Meter Hours"
-        name="serviceMeterHours"
-        value={formData.serviceMeterHours}
-        onChange={handleChange}
-        fullWidth
-        margin="normal"
-        helperText="Odometer reading"
-      />
-    </Grid>
-    <Grid item xs={6}>
-      <TextField
-        label="Inspector Signature"
-        name="inspectorSignature"
-        value={formData.inspectorSignature}
-        onChange={handleChange}
-        fullWidth
-        margin="normal"
-      />
-    </Grid>
-    <Grid item xs={6}>
-      <TextField
-        label="Customer Name / Company Name"
-        name="customerName"
-        value={formData.customerName}
-        onChange={handleChange}
-        fullWidth
-        margin="normal"
-      />
-    </Grid>
-    <Grid item xs={6}>
-      <TextField
-        label="CAT Customer ID"
-        name="catCustomerId"
-        value={formData.catCustomerId}
-        onChange={handleChange}
-        fullWidth
-        margin="normal"
-      />
-    </Grid>
-  </Grid>
-);
+// Define prompts and corresponding text field IDs
+const vehicleInfoPrompts = [
+  "Please enter the Truck Serial Number.",
+  "Please enter the Truck Model.",
+  "Please provide the Inspection ID.",
+  "Please provide the Inspector Name.",
+  "Please provide the Inspection Employee ID.",
+  "Please provide the Date and Time of Inspection.",
+  "Please provide the Location of Inspection.",
+  "Please provide the Geo Coordinates of Inspection.",
+  "Please provide the Service Meter Hours.",
+  "Please provide the Inspector Signature.",
+  "Please provide the Customer Name or Company Name.",
+  "Please provide the CAT Customer ID."
+];
+
+const vehicleInfoResponseBoxIds = [
+  'truckSerialNumber',
+  'truckModel',
+  'inspectionId',
+  'inspectorName',
+  'inspectionEmployeeId',
+  'dateTimeOfInspection',
+  'locationOfInspection',
+  'geoCoordinates',
+  'serviceMeterHours',
+  'inspectorSignature',
+  'customerName',
+  'catCustomerId'
+];
+
+const VehicleInfo = () => {
+    const [currentPromptIndex, setCurrentPromptIndex] = useState(0);
+    const [isListening, setIsListening] = useState(false);
+
+    const synth = window.speechSynthesis;
+    const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+
+    recognition.continuous = true;
+    recognition.interimResults = false;
+    recognition.lang = 'en-US';
+
+    useEffect(() => {
+        if (isListening) {
+            recognition.start();
+
+            recognition.onresult = (event) => {
+                const transcript = event.results[event.results.length - 1][0].transcript.trim().toLowerCase();
+                console.log('Heard:', transcript);
+
+                if (transcript === 'next') {
+                    handleNextPrompt();
+                } else {
+                    updateCurrentField(transcript);
+                }
+            };
+
+            recognition.onerror = (event) => {
+                console.error('Recognition error:', event.error);
+                recognition.stop();
+                recognition.start();
+            };
+        }
+
+        return () => recognition.stop();
+    }, [isListening, currentPromptIndex]);
+
+    const speakText = (text) => {
+        if (synth.speaking) {
+            synth.cancel();
+        }
+
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.onend = () => {
+            setIsListening(true);
+        };
+        synth.speak(utterance);
+    };
+
+    const startListening = () => {
+        setCurrentPromptIndex(0);
+        speakText(vehicleInfoPrompts[0]);
+    };
+
+    const handleNextPrompt = () => {
+        const nextIndex = currentPromptIndex + 1;
+
+        if (nextIndex < vehicleInfoPrompts.length) {
+            setCurrentPromptIndex(nextIndex);
+            speakText(vehicleInfoPrompts[nextIndex]);
+        } else {
+            setIsListening(false);
+            console.log("Vehicle information entry complete.");
+        }
+    };
+
+    const updateCurrentField = (transcript) => {
+        const currentFieldId = vehicleInfoResponseBoxIds[currentPromptIndex];
+        const textBox = document.getElementById(currentFieldId);
+        if (textBox) {
+            textBox.value = transcript;
+        }
+    };
+
+    return (
+        <div style={{ padding: '20px', maxWidth: '500px', margin: '0 auto', fontFamily: 'Arial, sans-serif' }}>
+            <h1 style={{ color: '#007bff', textAlign: 'center' }}>Vehicle Information</h1>
+            <button 
+                onClick={startListening}
+                style={{
+                    display: 'block',
+                    margin: '0 auto 20px',
+                    padding: '10px 20px',
+                    backgroundColor: '#007bff',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '5px',
+                    cursor: 'pointer'
+                }}
+            >
+                Start Vehicle Info
+            </button>
+            <div id="status" style={{ marginBottom: '20px', textAlign: 'center' }}>Status: {isListening ? 'Listening...' : 'Not Listening'}</div>
+
+            {vehicleInfoResponseBoxIds.map((id, index) => (
+                <div className="input-group" key={id} style={{ marginBottom: '15px' }}>
+                    <label htmlFor={id} style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
+                        {vehicleInfoPrompts[index]}
+                    </label>
+                    <input 
+                        type="text" 
+                        id={id} 
+                        style={{
+                            width: '100%',
+                            padding: '10px',
+                            border: '2px solid #007bff',
+                            borderRadius: '5px'
+                        }} 
+                    />
+                </div>
+            ))}
+        </div>
+    );
+};
 
 export default VehicleInfo;
